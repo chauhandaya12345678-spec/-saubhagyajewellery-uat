@@ -1,8 +1,0 @@
-{
-  "name": "saubhagyajewellery",
-  "private": true,
-  "description": "Saubhagya Jewellery storefront (Cloudflare Pages + Functions). No build step; deps are only for Pages Functions bundling.",
-  "dependencies": {
-    "@sentry/cloudflare": "^10.68.0"
-  }
-}
