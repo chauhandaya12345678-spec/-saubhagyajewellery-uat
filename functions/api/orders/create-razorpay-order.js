@@ -107,7 +107,7 @@ export async function onRequest(context) {
 
     if (!razorpayRes.ok) {
       const errText = await razorpayRes.text();
-      return json({ error: 'Razorpay order failed', details: errText }, 400);
+      return json({ error: 'Razorpay order failed', details: errText }, 502);
     }
 
     const orderData = await razorpayRes.json();
