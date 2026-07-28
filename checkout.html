@@ -560,6 +560,9 @@
       }));
     } catch(e) {}
     try { localStorage.setItem('cc_cart', '[]'); } catch(e) {}
+    // Stash item names so the success page can show what was ordered (names,
+    // not SKUs — the customer never sees SKUs; admin does).
+    try { localStorage.setItem('cc_lastorder_items', JSON.stringify((saveBody.items || []).map(function(l){ return { name: l.name, qty: l.qty }; }))); } catch(e) {}
     cartItems = [];
     showOverlay();
     var save = fetch('/api/orders/save', {
