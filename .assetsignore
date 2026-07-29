@@ -1,0 +1,13 @@
+.git
+.git/**
+.claude
+.claude/**
+.gitignore
+.assetsignore
+wrangler.toml
+HANDOVER.md
+README.md
+build
+build/**
+ops
+ops/**
