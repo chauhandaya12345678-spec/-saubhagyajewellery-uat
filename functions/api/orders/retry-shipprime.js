@@ -16,7 +16,7 @@
  * Cloudflare Pages Functions do not support native scheduled triggers on
  * the free tier — this endpoint bridges to any external cron.
  */
-import { pushToShipPrime, recordShipprimeResult, logOrderEvent, syncActiveOrderStatuses } from '../_lib.js';
+import { recordShipprimeResult, logOrderEvent, syncActiveOrderStatuses } from '../_lib.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
