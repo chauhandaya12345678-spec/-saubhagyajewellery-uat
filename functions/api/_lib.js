@@ -360,25 +360,23 @@ export async function adminLogin(request, env, corsHeaders) {
   return { success: true, token, role: effectiveRole, username: user.username };
 }
 
-/* Admin CORS: tools are fetched from either saubhagyajewellery.com (LIVE) or
-   uat.saubhagyajewellery.com (UAT). Dynamically echo the request origin so
-   admin pages work on both without wildcarding. Falls back to saubhagyajewellery.com
-   when no Origin header is present (server-to-server calls). */
+/* Admin CORS: admin tools are served from the website (same-origin) AND from
+   the Saubhagya Manager app (admin subdomain + Capacitor native origins).
+   Echo the request Origin only when it's on the allowlist; otherwise fall back
+   to the main site. Backward compatible: callers that pass no request get the
+   default origin. */
 export function adminCorsHeaders(request) {
   const reqOrigin = request && request.headers && request.headers.get('Origin');
-  const allowed = ['https://saubhagyajewellery.com', 'https://uat.saubhagyajewellery.com',
-    'https://www.saubhagyajewellery.com', 'https://saubhagyajewellery.pages.dev',
+  const allowed = ['https://saubhagyajewellery.com', 'https://www.saubhagyajewellery.com',
+    'https://uat.saubhagyajewellery.com', 'https://saubhagyajewellery.pages.dev',
     'https://admin.saubhagyajewellery.com',
-    // Capacitor native app origins (Android uses https://localhost, iOS capacitor://localhost)
+    // Capacitor native app origins (Android https://localhost, iOS capacitor://localhost)
     'https://localhost', 'capacitor://localhost', 'http://localhost'];
-  // Also allow any *.pages.dev preview URL
-  if (reqOrigin && /^https:\/\/[^.]+\.saubhagyajewellery\.pages\.dev$/.test(reqOrigin)) {
-    allowed.push(reqOrigin);
-  }
+  if (reqOrigin && /^https:\/\/[^.]+\.saubhagyajewellery\.pages\.dev$/.test(reqOrigin)) allowed.push(reqOrigin);
   const origin = reqOrigin && allowed.indexOf(reqOrigin) !== -1 ? reqOrigin : 'https://saubhagyajewellery.com';
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-admin-key, x-admin-session',
     'Vary': 'Origin',
   };

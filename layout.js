@@ -176,7 +176,6 @@
       '<a class="logo logo-real" href="index.html" title="Saubhagya Jewellery — Home">' +
       '<img class="brand-logo" src="images/brand/logo-mark-gold.png?v=1" alt="" width="45" height="45">' +
       '<span class="logo-stack"><span class="logo-name">SAUBHAGYA</span><span class="logo-sub">JEWELLERY</span></span>' +
-      '<span class="uat-tag" style="color:#ff3b30;font-family:Montserrat,sans-serif;font-size:9px;font-weight:800;letter-spacing:1.5px;margin-left:8px;background:#fff3f3;padding:2px 7px;border-radius:3px;border:1px solid #ff3b30;white-space:nowrap;">UAT — TEST MODE</span>' +
       '<span class="sr-only">Saubhagya Jewellery — handcrafted imitation jewellery, Mumbai. Home.</span>' +
       '</a>' +
       '<nav class="navlinks">' + links + '</nav>' +
@@ -479,10 +478,4 @@
     });
     window.addEventListener('scroll', function () { if (!FINE) clearAll(); }, { passive: true });
   })();
-})();
-
-/* ── UAT: inject test Razorpay key for checkout ── */
-(function () {
-  window.SAUBHAGYA_ENV = window.SAUBHAGYA_ENV || {};
-  window.SAUBHAGYA_ENV.RAZORPAY_KEY_ID = window.SAUBHAGYA_ENV.RAZORPAY_KEY_ID || 'rzp_test_placeholder123';
 })();
