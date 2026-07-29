@@ -29,4 +29,5 @@ bucket_name = "saubhagya-images-uat"
 # UAT-only: admin image uploads write to saubhagya-images-uat and are served
 # from this isolated domain (live uses img.saubhagyajewellery.com).
 [vars]
+UAT_MODE = "true"
 R2_PUBLIC_BASE = "https://img-uat.saubhagyajewellery.com"
