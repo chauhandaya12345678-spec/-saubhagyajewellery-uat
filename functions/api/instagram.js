@@ -21,7 +21,8 @@
 const IG_USER_ID_DEFAULT = '17841443636393065';
 const PROFILE_URL = 'https://www.instagram.com/saubhagyajewellery_/';
 const GRAPH_VERSION = 'v22.0';
-const FIELDS = 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp';
+const FIELDS = 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp,like_count,comments_count';
+const PROFILE_FIELDS = 'username,profile_picture_url,followers_count,media_count';
 const TTL = 1800; // 30 min
 const CAPTION_MAX = 140;
 
@@ -51,7 +52,7 @@ export async function onRequest(context) {
 
   const igUserId = env.IG_USER_ID || IG_USER_ID_DEFAULT;
   const url = new URL(request.url);
-  const limit = Math.min(24, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 12));
+  const limit = Math.min(24, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 6));
 
   // Cache key must be stable and token-free: same origin+path+limit for every
   // visitor, so one Graph call serves the whole colo for TTL.
@@ -69,13 +70,21 @@ export async function onRequest(context) {
 
   let payload;
   try {
+    const sig = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(6000) : undefined;
     const api = `https://graph.facebook.com/${GRAPH_VERSION}/${encodeURIComponent(igUserId)}/media`
       + `?fields=${FIELDS}&limit=${limit}&access_token=${encodeURIComponent(token)}`;
-    const res = await fetch(api, {
-      headers: { Accept: 'application/json' },
-      signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(6000) : undefined,
-    });
+    const profileApi = `https://graph.facebook.com/${GRAPH_VERSION}/${encodeURIComponent(igUserId)}`
+      + `?fields=${PROFILE_FIELDS}&access_token=${encodeURIComponent(token)}`;
+
+    // Profile powers the "@handle · N posts" header that makes the section
+    // read as Instagram rather than a generic gallery. It must never break
+    // the feed, so a failure just yields no header.
+    const [res, profRes] = await Promise.all([
+      fetch(api, { headers: { Accept: 'application/json' }, signal: sig }),
+      fetch(profileApi, { headers: { Accept: 'application/json' }, signal: sig }).catch(() => null),
+    ]);
     const data = await res.json().catch(() => ({}));
+    const prof = profRes && profRes.ok ? await profRes.json().catch(() => ({})) : {};
 
     if (!res.ok || data.error) {
       // Never echo the token or the full Graph envelope back to the browser.
@@ -99,10 +108,22 @@ export async function onRequest(context) {
         permalink: m.permalink || PROFILE_URL,
         isVideo,
         timestamp: m.timestamp || null,
+        // Counts are only meaningful once a post has engagement; the UI hides
+        // a zero rather than advertising "0 likes" on a fresh account.
+        likes: Number(m.like_count) || 0,
+        comments: Number(m.comments_count) || 0,
       };
     }).filter(p => p.id && p.image);
 
-    payload = { status: 'ok', posts, count: posts.length, profile: PROFILE_URL };
+    payload = {
+      status: 'ok', posts, count: posts.length, profile: PROFILE_URL,
+      account: {
+        username: prof.username || 'saubhagyajewellery_',
+        avatar: prof.profile_picture_url || '',
+        followers: Number(prof.followers_count) || 0,
+        mediaCount: Number(prof.media_count) || 0,
+      },
+    };
   } catch (err) {
     return json({ status: 'error', posts: [], error: String(err.message || err).slice(0, 200) });
   }

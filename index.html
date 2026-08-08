@@ -264,26 +264,37 @@
   .rv-avg { font-family:'Playfair Display',serif; font-size:40px; color:#0B291C; line-height:1; }
   .rv-avg-sub { font-size:12px; color:#6B6257; letter-spacing:.4px; }
 
-  /* ══ Instagram — full-bleed tiles, caption reveals over the image ══ */
-  .ig-card { width:268px; border-radius:20px; overflow:hidden; background:#EDE6DA; position:relative; display:block;
-    aspect-ratio:4/5;
+  /* ══ Instagram — post cards that read as Instagram, horizontal rail only ══ */
+  .ig-head { display:flex; align-items:center; gap:13px; max-width:1280px; margin:0 auto 20px; }
+  .ig-avatar { width:52px; height:52px; border-radius:50%; flex:none; object-fit:cover; display:block;
+    padding:2.5px; background:conic-gradient(from 200deg,#F5B840,#DD2A7B,#8134AF,#515BD4,#F5B840); }
+  .ig-avatar-in { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:2px solid #F0F5FA; }
+  .ig-handle { font-family:'Montserrat',sans-serif; font-size:14.5px; font-weight:600; color:#1A1A1A; letter-spacing:.2px; }
+  .ig-meta { font-size:12px; color:#6B6257; margin-top:2px; }
+  .ig-follow { margin-left:auto; background:#0B291C; color:#fff; font-family:'Montserrat',sans-serif;
+    font-size:11px; font-weight:600; letter-spacing:1.2px; padding:10px 20px; border-radius:12px; white-space:nowrap; }
+  .ig-follow:hover { background:#071B12; }
+
+  .ig-card { width:270px; border-radius:18px; overflow:hidden; background:#fff; position:relative; display:block;
+    border:1px solid rgba(11,41,28,.09);
     box-shadow:0 1px 3px rgba(11,41,28,.05), 0 14px 32px -22px rgba(11,41,28,.45);
     transition:transform .45s cubic-bezier(.25,1,.5,1), box-shadow .45s; }
   .ig-card:hover { transform:translateY(-5px); box-shadow:0 3px 8px rgba(11,41,28,.08), 0 26px 50px -24px rgba(11,41,28,.52); }
-  /* absolute fill — percentage height on an aspect-ratio parent is what left
-     the old tiles pillarboxed with cream showing through */
-  .ig-card img, .ig-card video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
-  .ig-card video { opacity:0; transition:opacity .35s; z-index:1; }
-  .ig-card.playing video { opacity:1; }
-  .ig-cap { position:absolute; left:0; right:0; bottom:0; z-index:2;
-    padding:34px 14px 13px; font-size:12.5px; line-height:1.45; color:#fff;
-    background:linear-gradient(180deg,rgba(11,41,28,0),rgba(11,41,28,.86));
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-    opacity:0; transform:translateY(6px); transition:opacity .35s, transform .35s; }
-  .ig-card:hover .ig-cap, .ig-card:focus-visible .ig-cap { opacity:1; transform:translateY(0); }
-  .ig-vid { position:absolute; top:10px; right:10px; z-index:3; background:rgba(0,0,0,.55); color:#fff;
-    border-radius:50%; width:28px; height:28px; display:grid; place-items:center; font-size:11px; padding-left:2px; }
-  @media (hover:none) { .ig-cap { opacity:1; transform:none; } }
+  .ig-media { position:relative; width:100%; aspect-ratio:1; background:#EDE6DA; overflow:hidden; }
+  /* absolute fill — percentage height inside an aspect-ratio box doesn't
+     resolve, which is what left the earlier tiles pillarboxed */
+  .ig-media img, .ig-media video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .ig-media video { opacity:0; transition:opacity .4s; z-index:1; }
+  .ig-card.playing .ig-media video { opacity:1; }
+  .ig-vid { position:absolute; top:10px; right:10px; z-index:3; color:#fff; font-size:15px;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
+  .ig-body { padding:11px 13px 13px; }
+  .ig-acts { display:flex; align-items:center; gap:14px; font-size:14px; color:#1A1A1A; }
+  .ig-acts b { font-weight:600; font-size:12.5px; }
+  .ig-acts .sp { margin-left:auto; font-size:11px; color:#9C9384; letter-spacing:.3px; }
+  .ig-cap { margin-top:8px; font-size:12.5px; line-height:1.5; color:#2b2b2b;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ig-cap b { font-weight:600; color:#1A1A1A; margin-right:5px; }
   .ig-empty { text-align:center; max-width:560px; margin:0 auto; padding:34px 24px 40px;
     border:1px dashed rgba(197,168,128,.6); border-radius:22px; background:#fff; }
   .ig-handle { font-family:'Playfair Display',serif; font-size:22px; color:#0B291C; margin:14px 0 8px; }
@@ -292,14 +303,15 @@
     .rail { margin:0 -14px; padding-left:14px; padding-right:14px; }
     .v360 { width:196px; }
     .rv-card { width:264px; }
-    .ig-card { width:226px; }
+    .ig-card { width:238px; }
     .rv-avg { font-size:32px; }
+    .ig-avatar { width:46px; height:46px; }
   }
   @media (min-width:901px) {
     .rail.grid360 { display:grid; grid-template-columns:repeat(5,1fr); overflow:visible; }
     .rail.grid360 .v360 { width:auto; }
-    .rail.gridig { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; overflow:visible; }
-    .rail.gridig .ig-card { width:auto; }
+    /* Instagram stays a horizontal swipe rail at every width — never wraps
+       into a stacked grid. */
   }
   @media (prefers-reduced-motion:reduce) {
     .v360-card, .rv-card, .ig-card { transition:none; }
@@ -463,8 +475,8 @@
   <!-- INSTAGRAM -->
   <section class="hm-section" id="hm-insta">
     <div class="hm-sec-head">
-      <div class="hm-sec-kicker">@SAUBHAGYAJEWELLERY_</div>
-      <h2 class="hm-sec-title">Follow Our Journey</h2>
+      <div class="hm-sec-kicker">LATEST ON INSTAGRAM</div>
+      <h2 class="hm-sec-title">Fresh From Our Feed</h2>
     </div>
     <div id="ig-body"></div>
   </section>
@@ -746,25 +758,52 @@
         '</div>';
     }
 
-    fetch('/api/instagram')
+    fetch('/api/instagram?limit=6')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var posts = (d && d.posts) || [];
         if (!posts.length) { emptyState(); return; }
+        var acct = d.account || {};
+        function ago(ts) {
+          if (!ts) return '';
+          var s = Math.max(1, (Date.now() - new Date(ts).getTime()) / 1000);
+          if (s < 3600) return Math.floor(s / 60) + 'm ago';
+          if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+          if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+          return Math.floor(s / 604800) + 'w ago';
+        }
+        var handle = esc(acct.username || 'saubhagyajewellery_');
+        var avatar = acct.avatar
+          ? '<span class="ig-avatar"><img class="ig-avatar-in" src="' + esc(acct.avatar) + '" alt="" loading="lazy" decoding="async"></span>'
+          : '';
+
         body.innerHTML =
-          '<div class="rail gridig" id="ig-rail">' + posts.map(function (p) {
+          '<div class="ig-head">' + avatar +
+            '<div><div class="ig-handle">@' + handle + '</div>' +
+            '<div class="ig-meta">' + (acct.mediaCount ? acct.mediaCount + ' posts · ' : '') + 'Latest from Instagram</div></div>' +
+            '<a class="ig-follow" href="' + PROFILE + '" target="_blank" rel="noopener">FOLLOW</a>' +
+          '</div>' +
+          '<div class="rail" id="ig-rail">' + posts.map(function (p) {
+            var eng = '';
+            if (p.likes) eng += '<span>&#9825; <b>' + p.likes + '</b></span>';
+            if (p.comments) eng += '<span>&#128172; <b>' + p.comments + '</b></span>';
             return '<a class="ig-card" href="' + esc(p.permalink || PROFILE) + '" target="_blank" rel="noopener"' +
                 (p.video ? ' data-video="' + esc(p.video) + '"' : '') + '>' +
-                '<img src="' + esc(p.image) + '" alt="' + esc((p.caption || 'Instagram post').slice(0, 80)) + '" loading="lazy" decoding="async">' +
-                (p.isVideo ? '<span class="ig-vid">▶</span>' : '') +
-                (p.caption ? '<div class="ig-cap">' + esc(p.caption) + '</div>' : '') +
+                '<div class="ig-media">' +
+                  '<img src="' + esc(p.image) + '" alt="' + esc((p.caption || 'Instagram post').slice(0, 80)) + '" loading="lazy" decoding="async">' +
+                  (p.isVideo ? '<span class="ig-vid">&#9654;</span>' : '') +
+                '</div>' +
+                '<div class="ig-body">' +
+                  '<div class="ig-acts">' + eng + '<span class="sp">' + esc(ago(p.timestamp)) + '</span></div>' +
+                  (p.caption ? '<div class="ig-cap"><b>' + handle + '</b>' + esc(p.caption) + '</div>' : '') +
+                '</div>' +
               '</a>';
           }).join('') + '</div>' +
           '<div class="tr-more"><a href="' + PROFILE + '" target="_blank" rel="noopener">VIEW ON INSTAGRAM &rarr;</a></div>';
 
-        /* Hover (desktop) / scroll-into-view (touch) plays the reel inline.
-           The <video> is created on demand so a grid of reels costs nothing
-           until someone actually shows interest in one. */
+        /* Reels move on their own once scrolled into the rail (and on hover),
+           so the section feels alive. The <video> is only created when a card
+           is actually in view — a rail of reels costs nothing before that. */
         var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         [].slice.call(document.querySelectorAll('.ig-card[data-video]')).forEach(function (card) {
           var vid = null;
@@ -775,11 +814,11 @@
               vid.muted = true; vid.loop = true; vid.playsInline = true; vid.preload = 'none';
               vid.setAttribute('muted', ''); vid.setAttribute('playsinline', '');
               vid.src = card.getAttribute('data-video');
-              card.appendChild(vid);
+              card.querySelector('.ig-media').appendChild(vid);
             }
             card.classList.add('playing');
-            var p = vid.play();
-            if (p && p.catch) p.catch(function () { card.classList.remove('playing'); });
+            var pr = vid.play();
+            if (pr && pr.catch) pr.catch(function () { card.classList.remove('playing'); });
           }
           function stop() {
             if (!vid) return;
@@ -788,8 +827,11 @@
           }
           card.addEventListener('mouseenter', start);
           card.addEventListener('mouseleave', stop);
-          card.addEventListener('focus', start);
-          card.addEventListener('blur', stop);
+          if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (en) {
+              en.forEach(function (e) { if (e.isIntersecting) start(); else stop(); });
+            }, { threshold: 0.6 }).observe(card);
+          }
         });
       })
       .catch(emptyState);
