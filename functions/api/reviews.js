@@ -39,7 +39,7 @@ export async function onRequest(context) {
     const q = async (sqlWith, sqlWithout, ...bind) => {
       try { return await db.prepare(sqlWith).bind(...bind).all(); }
       catch (e) {
-        if (!/no such column/i.test(e.message || '')) throw e;
+        if (!/no such column|has no column named/i.test(e.message || '')) throw e;
         return await db.prepare(sqlWithout).bind(...bind).all();
       }
     };
@@ -130,15 +130,22 @@ export async function onRequest(context) {
         await db.prepare('INSERT INTO reviews (product_sku, user_id, name, rating, review_text, image_url) VALUES (?, ?, ?, ?, ?, ?)')
           .bind(product_sku, userId, safeName, rating, review_text, imageUrl).run();
       } catch (e) {
-        if (!/no such column/i.test(e.message || '')) throw e;
+        // SQLite words this differently per statement type: SELECT gives
+        // "no such column: x", INSERT gives "table reviews has no column
+        // named x". Match both or the fallback never fires.
+        if (!/no such column|has no column named/i.test(e.message || '')) throw e;
         await db.prepare('INSERT INTO reviews (product_sku, user_id, name, rating, review_text) VALUES (?, ?, ?, ?, ?)')
           .bind(product_sku, userId, safeName, rating, review_text).run();
+        // The photo is already in R2 but can't be referenced — tell the
+        // caller so it isn't reported as a fully successful submission.
+        if (imageUrl) return json({ success: true, verified: true, photoStored: false });
       }
       return json({ success: true, verified: true });
     }
 
     return json({ error: 'Method not allowed' }, 405);
   } catch (err) {
-    return json({ error: err.message }, 500);
+    console.log('reviews error:', err && err.message);
+    return json({ error: 'Could not process that right now. Please try again.' }, 500);
   }
 }

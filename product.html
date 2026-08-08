@@ -1152,7 +1152,10 @@
     }).catch(function(e) {
       $('rv-submit').disabled = false;
       msg.style.color = '#c0392b';
-      msg.textContent = (e && e.message) || 'Network error. Try again.';
+      // Only our own upload errors are customer-appropriate; anything else
+      // (e.g. a Cloudflare HTML error page failing JSON.parse) gets the
+      // generic line instead of leaking parser output into the storefront.
+      msg.textContent = (e && e.userFacing && e.message) || 'Could not submit right now. Please try again.';
     });
   });
 
@@ -1180,7 +1183,9 @@
       .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
       .then(function(res) {
         if (!res.ok || !res.d || !res.d.url) {
-          throw new Error((res.d && res.d.error) || 'Photo upload failed. Try a smaller image.');
+          var upErr = new Error((res.d && res.d.error) || 'Photo upload failed. Try a smaller image.');
+          upErr.userFacing = true;
+          throw upErr;
         }
         return res.d.url;
       });

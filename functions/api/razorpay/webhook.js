@@ -225,7 +225,11 @@ export async function onRequest(context) {
           meta: r,
         }))
         .catch(() => {});
-      await Promise.race([pushJob, new Promise(res => setTimeout(res, 8000))]);
+      // Razorpay treats a webhook as failed past ~5s and retries, so cap
+      // well under that; waitUntil keeps the send alive past the response
+      // if it loses the race, instead of dying with the isolate.
+      if (context.waitUntil) context.waitUntil(pushJob);
+      await Promise.race([pushJob, new Promise(res => setTimeout(res, 3000))]);
     }
 
     return json({ ok: true, order_id: orderId, shipprime: sp || { pushed: false } });

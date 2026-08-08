@@ -20,7 +20,7 @@
 import { normEmail, normPhone } from './_lib.js';
 
 const PUBLIC_BASE_DEFAULT = 'https://img.saubhagyajewellery.com';
-const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const ALLOWED = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']]);
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export async function onRequest(context) {
@@ -42,6 +42,12 @@ export async function onRequest(context) {
     if (!db) return json({ error: 'DB not bound' }, 501);
     if (!env.IMAGES) return json({ error: 'R2 bucket (IMAGES) not bound' }, 501);
 
+    // Reject oversized bodies BEFORE parsing — formData() materialises the
+    // entire request in memory, so the cap has to come first or this public
+    // endpoint is a memory-exhaustion lever for anyone, order or not.
+    const declared = Number(request.headers.get('content-length') || 0);
+    if (declared > MAX_BYTES + 64 * 1024) return json({ error: 'File too large (max 5 MB)' }, 413);
+
     let form;
     try { form = await request.formData(); } catch { return json({ error: 'Expected multipart/form-data' }, 400); }
 
@@ -61,8 +67,9 @@ export async function onRequest(context) {
     const bought = (rows.results || []).some(o => String(o.items || '').includes(skuTag));
     if (!bought) return json({ error: 'Only verified buyers can review this product. Sign in with the email or phone you used at checkout.' }, 403);
 
-    const ct = file.type || 'application/octet-stream';
-    const ext = ALLOWED[ct];
+    // Strip any ";charset=..." and normalise before the lookup.
+    const ct = String(file.type || 'application/octet-stream').split(';')[0].trim().toLowerCase();
+    const ext = ALLOWED.get(ct);
     if (!ext) return json({ error: 'Unsupported type ' + ct + ' (use jpg/png/webp)' }, 415);
 
     // Cheap size check first (Blob.size), then re-check the real buffer length.

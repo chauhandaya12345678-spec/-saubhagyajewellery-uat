@@ -311,7 +311,7 @@
   .ig-cap b { font-weight:600; color:#1A1A1A; margin-right:5px; }
   .ig-empty { text-align:center; max-width:560px; margin:0 auto; padding:34px 24px 40px;
     border:1px dashed rgba(197,168,128,.6); border-radius:22px; background:#fff; }
-  .ig-handle { font-family:'Playfair Display',serif; font-size:22px; color:#0B291C; margin:14px 0 8px; }
+  .ig-empty-handle { font-family:'Playfair Display',serif; font-size:22px; color:#0B291C; margin:14px 0 8px; }
 
   @media (max-width:900px) {
     .rail { margin:0 -14px; padding-left:14px; padding-right:14px; }
@@ -681,8 +681,15 @@
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         inView = en.isIntersecting;
-        if (inView) { if (current === -1 && !reduce) play(0); }
-        else if (current > -1) { var v = vidOf(current); if (v) v.pause(); }
+        if (inView) {
+          if (current === -1 && !reduce) play(0);
+        } else if (current > -1) {
+          // Fully reset, don't just pause: leaving the card mid-play with
+          // `current` still set left it frozen with no play overlay and
+          // unclickable (the i === current guard swallowed the tap).
+          stop(current);
+          current = -1;
+        }
       });
     }, { threshold: 0.25 });
     io.observe(rail);
@@ -766,7 +773,7 @@
       body.innerHTML =
         '<div class="ig-empty">' +
           '<div class="rv-stars" style="font-size:20px">✦</div>' +
-          '<div class="ig-handle">@saubhagyajewellery_</div>' +
+          '<div class="ig-empty-handle">@saubhagyajewellery_</div>' +
           '<p class="lede" style="margin:0 auto 20px;font-size:15px">New pieces, styling ideas and behind-the-scenes from our Mumbai workshop — first on Instagram.</p>' +
           '<a class="hm-btn" href="' + PROFILE + '" target="_blank" rel="noopener">FOLLOW ON INSTAGRAM</a>' +
         '</div>';
