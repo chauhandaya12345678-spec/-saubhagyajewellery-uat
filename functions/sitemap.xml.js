@@ -8,10 +8,15 @@ const SITE_URL = 'https://saubhagyajewellery.com';
 
 const STATIC_PAGES = [
   '/', '/categories', '/gifting', '/track-orders', '/about', '/contact',
+  '/faq', '/jewellery-guide',
   '/trust', '/blogs', '/shipping-and-returns', '/es-policy', '/grievances',
   '/terms', '/offer-terms', '/privacy-policy', '/cookie-policy',
   '/blogs/temple-jewellery-styling', '/blogs/kundan-vs-polki',
   '/blogs/caring-matte-gold', '/blogs/bridal-set-6-hour-event',
+  '/blogs/real-vs-fake-gold-plated', '/blogs/indian-bridal-jewellery-guide',
+  '/blogs/care-tips-imitation-jewellery',
+  '/blogs/punjabi-wedding-jewellery', '/blogs/bengali-bride-jewellery',
+  '/blogs/maharashtrian-jewellery', '/blogs/south-indian-temple-jewellery',
 ];
 
 function esc(s) {

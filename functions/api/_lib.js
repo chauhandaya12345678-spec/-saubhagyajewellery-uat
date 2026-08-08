@@ -95,7 +95,33 @@ export async function alertLowStock(env, sku, name, remaining) {
   return sendWhatsAppMessage(env, ownerPhone, template, [name || sku, sku, String(remaining)]);
 }
 
-export const COD_FEE_PAISE = 4500; // ₹45 — must match checkout.html's COD_FEE
+/* ── COD fee ───────────────────────────────────────────────────────────────
+   The courier charges us MAX(10% of order value, ₹21.19) + 18% GST on that
+   = an effective 11.8% of order value, floor ₹25. A flat ₹45 therefore broke
+   even at ~₹381 and lost money on every order above it (₹-73 at the ₹1,000
+   cap), which is where most of the catalogue sits.
+
+   So the fee is now proportional with a floor: 12% of goods value, minimum
+   ₹49. 12% clears the 11.8% cost at every price point, and the floor keeps
+   small orders profitable. The customer is shown the resolved rupee amount,
+   never the formula.
+
+   KEEP IN SYNC with checkout.html (COD_FEE_PCT / COD_FEE_MIN) and the fee
+   wording in terms.html — the server value below is the authority and will
+   reject a client total that disagrees. */
+export const COD_FEE_PCT = 0.12;
+export const COD_FEE_MIN_PAISE = 4900; // ₹49 floor
+
+/* Goods subtotal (paise) → COD fee (paise), rounded to whole rupees so the
+   customer never sees a paise-level number. */
+export function codFeePaise(goodsPaise) {
+  const pct = Math.round((Number(goodsPaise) || 0) * COD_FEE_PCT);
+  return Math.round(Math.max(pct, COD_FEE_MIN_PAISE) / 100) * 100;
+}
+
+/* Back-compat: some older callers import COD_FEE_PAISE expecting a flat fee.
+   It now represents the floor only — prefer codFeePaise(goodsPaise). */
+export const COD_FEE_PAISE = COD_FEE_MIN_PAISE;
 
 /* Recomputes the real order total from D1 prices — never trust price/qty
    the client sends. items = [{ id | sku, qty }]. Returns paise. Unknown
@@ -110,7 +136,8 @@ export async function computeExpectedTotalPaise(db, items, paymentMethod) {
     const row = await db.prepare('SELECT price FROM products WHERE sku = ?').bind(sku).first();
     totalPaise += Math.round((row ? row.price : 0) * 100) * qty;
   }
-  if (paymentMethod === 'cod') totalPaise += COD_FEE_PAISE;
+  // Fee is a function of the GOODS value, so it must be added after the loop.
+  if (paymentMethod === 'cod') totalPaise += codFeePaise(totalPaise);
   return totalPaise;
 }
 
@@ -1113,8 +1140,12 @@ export async function sendFcmToAdmins(env, notif, data) {
     const dataStr = {};
     for (const k in (data || {})) dataStr[k] = String(data[k]);
 
+    // Fan out in parallel. This used to be a sequential await-per-token loop:
+    // with several stale tokens (each still costing a full round-trip until
+    // FCM answers NOT_FOUND) the whole bundle could exceed the caller's 15s
+    // cap and die with the isolate, losing both the sends and the log row.
     let sent = 0, failed = 0; const dead = [];
-    for (const token of tokens) {
+    const sendResults = await Promise.all(tokens.map(async (token) => {
       const msg = {
         message: {
           token,
@@ -1123,18 +1154,24 @@ export async function sendFcmToAdmins(env, notif, data) {
           android: { priority: 'high', notification: { channel_id: 'orders', click_action: 'OPEN_ORDER' } },
         },
       };
-      const r = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify(msg),
-      });
-      if (r.ok) { sent++; }
-      else {
-        failed++;
+      try {
+        const r = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify(msg),
+        });
+        if (r.ok) return { ok: true };
         const err = await r.json().catch(() => ({}));
         const code = err && err.error && (err.error.status || '');
-        if (code === 'NOT_FOUND' || code === 'UNREGISTERED' || r.status === 404) dead.push(token);
+        const gone = code === 'NOT_FOUND' || code === 'UNREGISTERED' || r.status === 404;
+        return { ok: false, token: gone ? token : null };
+      } catch (e) {
+        return { ok: false, token: null };
       }
+    }));
+    for (const r of sendResults) {
+      if (r.ok) sent++;
+      else { failed++; if (r.token) dead.push(r.token); }
     }
     if (dead.length) {
       const ph = dead.map(() => '?').join(',');

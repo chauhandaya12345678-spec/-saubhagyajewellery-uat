@@ -7,6 +7,8 @@
  * Canonical is ALWAYS the clean /product/<sku> URL so Google indexes one
  * URL per product (query-string URLs are poorly indexed for e-commerce).
  */
+import { seoSubtitle, productKeywords } from './_seo.js';
+
 const SITE_URL = 'https://saubhagyajewellery.com';
 
 export function esc(s) {
@@ -23,18 +25,11 @@ export function cleanProductUrl(sku) {
 }
 
 export async function renderProductShell(html, p, env) {
-  const seoSubtitle = (() => {
-    const n = p.name || '';
-    if (/jhumka/i.test(n)) return 'Traditional Gold-Plated Jhumka Earrings for Weddings & Festive Wear';
-    if (p.category === 'Earring') return 'Handcrafted Gold-Plated Earrings for Everyday & Festive Wear';
-    if (/crystal/i.test(n)) return 'Crystal-Studded High Gold-Plated Necklace for Weddings & Party Wear';
-    if (/short/i.test(n)) return 'High Gold-Plated Short Necklace for Festive & Party Wear';
-    if (p.category === 'Necklace') return 'Handcrafted High Gold-Plated Necklace for Weddings & Festive Wear';
-    return 'Handcrafted Gold-Plated Imitation Jewellery, Made in India';
-  })();
+  const subtitle = seoSubtitle(p);        // shared region/style-aware engine
+  const keywords = productKeywords(p);
 
-  const title = `${p.name} - ${seoSubtitle} | Saubhagya Jewellery`;
-  const desc = `Buy ${p.name} online at ₹${p.price}. ${seoSubtitle}, handcrafted in Mumbai from skin-friendly Zamak alloy. Free insured shipping across India.`;
+  const title = `${p.name} - ${subtitle} | Saubhagya Jewellery`;
+  const desc = `Buy ${p.name} online at ₹${p.price}. ${subtitle}, handcrafted in Mumbai from skin-friendly Zamak alloy. Free insured shipping across India.`;
   const canonical = cleanProductUrl(p.sku);
   const image = abs(p.image);
   const inStock = (p.inStock === 0 || p.inStock === false) ? false : true;
@@ -58,6 +53,25 @@ export async function renderProductShell(html, p, env) {
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',
       seller: { '@type': 'Organization', name: 'Saubhagya Jewellery' },
+      merchantReturnLink: SITE_URL + '/shipping-and-returns',
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'INR' },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+          transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 4, unitCode: 'DAY' },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnUnspecified',
+        merchantReturnDays: 7,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+      },
     },
   };
   if (reviewStats) {
@@ -107,8 +121,24 @@ export async function renderProductShell(html, p, env) {
       `<meta name="twitter:title" content="${esc(title)}">` +
       `<meta name="twitter:description" content="${esc(desc)}">` +
       `<meta name="twitter:image" content="${esc(image)}">` +
+      `<meta name="keywords" content="${esc(keywords)}">` +
       `<script type="application/ld+json">${JSON.stringify(productLd)}</script>` +
       `<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>` +
       `</head>`
+    )
+    // SSR body: prevent soft-404 by removing misleading text Googlebot sees in raw HTML.
+    // pdp-loading / pdp-error / oos-stamp are client-side managed via JS — but Googlebot
+    // doesn't execute JS, so it reads "Product Not Found" + "OUT OF STOCK" from source.
+    // When we've confirmed the product EXISTS in D1, scrub those strings from the shell.
+    .replace('id="pdp-loading"', 'id="pdp-loading" style="display:none"')
+    .replace(
+      '<p class="pdp-error-title">Product Not Found</p>',
+      '<p class="pdp-error-title" style="display:none"></p>'
+    )
+    .replace(
+      '<div class="pdp-oos-stamp" id="pdp-oos-stamp" style="display:none">OUT OF STOCK</div>',
+      inStock
+        ? '<div class="pdp-oos-stamp" id="pdp-oos-stamp" style="display:none"></div>'   // in stock → scrub text from raw HTML (no soft-404 signal)
+        : '<div class="pdp-oos-stamp" id="pdp-oos-stamp">OUT OF STOCK</div>'           // out of stock → visible, honest signal
     );
 }

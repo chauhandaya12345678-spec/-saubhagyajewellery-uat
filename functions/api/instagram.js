@@ -94,6 +94,8 @@ export async function onRequest(context) {
         id: String(m.id || ''),
         caption: cap.length > CAPTION_MAX ? cap.slice(0, CAPTION_MAX - 1) + '…' : cap,
         image,
+        // Real .mp4 for VIDEO/REEL so the grid can play it inline on hover.
+        video: isVideo ? (m.media_url || '') : '',
         permalink: m.permalink || PROFILE_URL,
         isVideo,
         timestamp: m.timestamp || null,

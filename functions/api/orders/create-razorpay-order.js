@@ -38,6 +38,12 @@ export async function onRequest(context) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
+    // UAT sandbox: Razorpay is fully disabled here. Online orders auto-confirm
+    // client-side without any payment, so this endpoint must never reach live
+    // Razorpay — refuse immediately even if called directly.
+    if (env.UAT_MODE === 'true') {
+      return json({ error: 'UAT sandbox: Razorpay disabled; online orders auto-confirm without payment.' }, 400);
+    }
     const { amount, currency, cart, name, email, phone, address, address_json, test_mode, magic } = await request.json();
     if (!amount || amount <= 0) return json({ error: 'Invalid amount' }, 400);
 

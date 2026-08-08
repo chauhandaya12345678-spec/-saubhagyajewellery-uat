@@ -58,31 +58,31 @@
 # Positive X-Robots-Tag on all indexable HTML — audit tools expect it explicitly.
 # Also enables large image + snippet previews in Google SERP.
 /
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /index.html
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /categories*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /product*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /gifting*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /blogs*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /about*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /contact*
-  X-Robots-Tag: index, follow, max-image-preview:large, max-snippet:-1
+  X-Robots-Tag: noindex, nofollow
 /track-orders*
-  X-Robots-Tag: index, follow
+  X-Robots-Tag: noindex, nofollow
 /shipping-and-returns*
-  X-Robots-Tag: index, follow
+  X-Robots-Tag: noindex, nofollow
 /privacy-policy*
-  X-Robots-Tag: index, follow
+  X-Robots-Tag: noindex, nofollow
 /terms*
-  X-Robots-Tag: index, follow
+  X-Robots-Tag: noindex, nofollow
 /trust*
-  X-Robots-Tag: index, follow
+  X-Robots-Tag: noindex, nofollow
 
 # Long cache for manifest + web app icons
 /manifest.json

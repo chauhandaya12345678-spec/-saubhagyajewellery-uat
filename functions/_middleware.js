@@ -29,6 +29,15 @@ export async function onRequest(context) {
       return next(); // admin-*.html, /api/*, assets — served normally
     }
 
+    // ── UAT sandbox: expose the desktop admin on the uat host too, so the
+    //    owner can review uat test orders (uat DB) in the web admin. Gated to
+    //    uat hosts only; the real store host below still hides admin. ──
+    const isUatHost = host === 'uat.saubhagyajewellery.com' ||
+                      host.endsWith('.saubhagyajewellery.pages.dev');
+    if (isUatHost) {
+      return next(); // serve store AND admin pages normally on uat
+    }
+
     // ── Main store: admin is not reachable here ──
     if (path === '/admin' || path === '/admin.html' ||
         path.startsWith('/admin/') || path.startsWith('/admin-')) {
