@@ -51,8 +51,10 @@ export async function onRequest(context) {
       if (!sku && url.searchParams.get('latest') === '1') {
         const n = parseInt(url.searchParams.get('limit'), 10);
         const limit = Math.min(Math.max(Number.isFinite(n) ? n : 12, 1), 24);
+        // image_url is surfaced ONLY once the owner approves the photo;
+        // the review text itself publishes immediately.
         const { results } = await q(
-          'SELECT product_sku, name, rating, review_text, image_url, created_at FROM reviews ORDER BY created_at DESC LIMIT ?',
+          "SELECT product_sku, name, rating, review_text, CASE WHEN image_status = 'approved' THEN image_url END AS image_url, created_at FROM reviews ORDER BY created_at DESC LIMIT ?",
           'SELECT product_sku, name, rating, review_text, created_at FROM reviews ORDER BY created_at DESC LIMIT ?',
           limit
         );
@@ -62,7 +64,7 @@ export async function onRequest(context) {
 
       if (!sku) return json({ error: 'sku required' }, 400);
       const { results } = await q(
-        'SELECT name, rating, review_text, image_url, created_at FROM reviews WHERE product_sku = ? ORDER BY created_at DESC',
+        "SELECT name, rating, review_text, CASE WHEN image_status = 'approved' THEN image_url END AS image_url, created_at FROM reviews WHERE product_sku = ? ORDER BY created_at DESC",
         'SELECT name, rating, review_text, created_at FROM reviews WHERE product_sku = ? ORDER BY created_at DESC',
         sku
       );
